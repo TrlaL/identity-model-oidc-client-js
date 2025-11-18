@@ -35,7 +35,7 @@ export class IFrameWindow {
             let timeout = params.silentRequestTimeout || DefaultTimeout;
             Log.debug("IFrameWindow.navigate: Using timeout of:", timeout);
             this._timer = window.setTimeout(this._timeout.bind(this), timeout);
-            this._frame.src = params.url;
+            this._frame.src = this._addCacheBustingParams(params.url);
         }
 
         return this.promise;
@@ -43,6 +43,17 @@ export class IFrameWindow {
 
     get promise() {
         return this._promise;
+    }
+
+    _addCacheBustingParams(url) {
+        try {
+            const urlObj = new URL(url);
+            urlObj.searchParams.set('__timestamp', Date.now());
+            return urlObj.toString();
+        } catch (e) {
+            Log.warn("IFrameWindow: Failed to add cache-busting params, using original URL");
+            return url;
+        }
     }
 
     _success(data) {
