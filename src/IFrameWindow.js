@@ -35,7 +35,7 @@ export class IFrameWindow {
             let timeout = params.silentRequestTimeout || DefaultTimeout;
             Log.debug("IFrameWindow.navigate: Using timeout of:", timeout);
             this._timer = window.setTimeout(this._timeout.bind(this), timeout);
-            this._frame.src = this._addCacheBustingParams(params.url);
+            this._frame.src = this._addCacheBustingParamToRedirectUri(params.url);
         }
 
         return this.promise;
@@ -45,13 +45,17 @@ export class IFrameWindow {
         return this._promise;
     }
 
-    _addCacheBustingParams(url) {
+    _addCacheBustingParamToRedirectUri(url) {
         try {
             const urlObj = new URL(url);
-            urlObj.searchParams.set('__timestamp', Date.now());
+            const redirectUri = urlObj.searchParams.get('redirect_uri');
+            const redirectUriObj = new URL(redirectUri);
+            redirectUriObj.searchParams.set('__timestamp', Date.now());
+            urlObj.searchParams.set('redirect_uri', redirectUriObj.toString());
+            Log.debug(`IFrameWindow._addCacheBustingParamToRedirectUri: generate ${urlObj.toString()}`);
             return urlObj.toString();
         } catch (e) {
-            Log.warn("IFrameWindow: Failed to add cache-busting params, using original URL");
+            Log.warn("IFrameWindow._addCacheBustingParamToRedirectUri: Failed to add cache-busting params, using original URL");
             return url;
         }
     }
